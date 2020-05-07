@@ -24,9 +24,7 @@
 #sub_wheel {
     background: darkorange;
     z-index: 1000;
-    width: 25%!important;
-    animation: spin linear;
-    animation-iteration-count: infinite;
+    width: 25% !important;
 }
 
 .wheel {
@@ -38,10 +36,7 @@
     background: darkorange;
     border-radius: 50%;
     display: flex;
-    animation: spin linear;
-    animation-iteration-count: infinite;
-    animation-play-state: paused;
-    /*animation-timing-function: cubic-bezier(0, 0, 0, .99);*/
+    transition: transform 5s ease-out;
 }
 
 body {
@@ -66,4 +61,8 @@ body {
     border-top: 60px solid transparent;
     border-bottom: 60px solid transparent;
     border-right: 60px solid green;
+}
+
+.opacity_low {
+    opacity: 0.3;
 }
