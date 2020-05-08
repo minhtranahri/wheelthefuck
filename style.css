@@ -49,6 +49,7 @@ body {
     position: absolute;
     right: 20%;
     z-index: 10000;
+    transform: rotate(-1deg);
 }
 
 .arrow-right {

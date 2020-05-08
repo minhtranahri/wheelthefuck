@@ -6,8 +6,9 @@ $(document).ready(function () {
     SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
 
     WHEEL_PROTO.dom.on('click', function () {
-        WHEEL_PROTO.spin();
-        SUB_WHEEL.spin();
+        const f = getRandomInt(1, 360);
+        WHEEL_PROTO.spin(f);
+        SUB_WHEEL.spin(f);
     });
 });
 
@@ -23,20 +24,23 @@ WHEEL.prototype = {
     radius: 0,
     x_cor: 0,
     y_cor: 0,
+    num: 20,
 
     constructor: function (dom, duration) {
         this.dom = dom;
         this.duration = duration;
         this.dom.on('transitionend', function () {
             this.toggleStatus();
+            console.log(this.getRotationDegrees(this.dom));
         }.bind(this));
         this.x_cor = this.y_cor = dom.attr('width') / 2;
         this.radius = dom.attr('width') / 2;
         this.drawCircle();
+        this.angle = 360 / this.num;
     },
-    spin: function () {
+    spin: function (f) {
         if (this.status) {
-            this.currentDeg = this.currentDeg + this.getRandomDeg();
+            this.currentDeg = this.currentDeg + this.getRandomDeg(f);
             this.dom.css({
                 'transform': `rotate(${this.currentDeg}deg)`,
                 'transition-duration': `${this.duration}s`
@@ -47,8 +51,8 @@ WHEEL.prototype = {
     toggleStatus: function () {
         return this.status = !this.status;
     },
-    getRandomDeg: function () {
-        return 360 * 10 + getRandomInt();
+    getRandomDeg: function (f) {
+        return 360 * 10 + f * this.angle + f;
     },
     drawCircle: function () {
         const can = this.dom[0];
@@ -63,6 +67,7 @@ WHEEL.prototype = {
                 ctx.beginPath();
                 ctx.lineWidth = "0.3";
                 ctx.strokeStyle = "#000";
+
                 ctx.moveTo(x, y);
                 ctx.lineTo(endX, endY);
                 ctx.closePath();
@@ -82,11 +87,28 @@ WHEEL.prototype = {
         } else {
             // Fallback code goes here
         }
+    },
+    getRotationDegrees: function (obj) {
+        let angle;
+        const matrix = obj.css("-webkit-transform") ||
+            obj.css("-moz-transform") ||
+            obj.css("-ms-transform") ||
+            obj.css("-o-transform") ||
+            obj.css("transform");
+        if (matrix !== 'none') {
+            const values = matrix.split('(')[1].split(')')[0].split(',');
+            const a = parseFloat(values[0]);
+            const b = parseFloat(values[1]);
+            angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+        } else {
+            angle = 0;
+        }
+        return (angle < 0) ? angle + 360 : angle;
     }
 };
 
-function getRandomInt() {
-    const min = Math.ceil(1);
-    const max = Math.floor(360);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+function getRandomInt(min, max) {
+    const MIN = Math.ceil(min);
+    const MAX = Math.floor(max);
+    return Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
 }
