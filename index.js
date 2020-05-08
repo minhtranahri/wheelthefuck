@@ -1,6 +1,6 @@
 $(document).ready(function () {
-    const WHEEL_PROTO = new WHEEL($('#wheel'), '0.5s');
-    const SUB_WHEEL = new WHEEL($('#sub_wheel'), '0.8s');
+    const WHEEL_PROTO = new WHEEL($('#wheel'), '5');
+    const SUB_WHEEL = new WHEEL($('#sub_wheel'), '8');
 
     WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
     SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
@@ -8,7 +8,7 @@ $(document).ready(function () {
     WHEEL_PROTO.dom.on('click', function () {
         WHEEL_PROTO.spin();
         SUB_WHEEL.spin();
-    })
+    });
 });
 
 const WHEEL = function (dom, duration) {
@@ -20,18 +20,27 @@ WHEEL.prototype = {
     status: true,
     duration: '0.5s',
     currentDeg: 0,
+    radius: 0,
+    x_cor: 0,
+    y_cor: 0,
+
     constructor: function (dom, duration) {
         this.dom = dom;
         this.duration = duration;
         this.dom.on('transitionend', function () {
             this.toggleStatus();
         }.bind(this));
+        this.x_cor = this.y_cor = dom.attr('width') / 2;
+        this.radius = dom.attr('width') / 2;
         this.drawCircle();
     },
     spin: function () {
         if (this.status) {
             this.currentDeg = this.currentDeg + this.getRandomDeg();
-            this.dom.css('transform', `rotate(${this.currentDeg}deg)`);
+            this.dom.css({
+                'transform': `rotate(${this.currentDeg}deg)`,
+                'transition-duration': `${this.duration}s`
+            });
             this.toggleStatus();
         }
     },
@@ -41,34 +50,33 @@ WHEEL.prototype = {
     getRandomDeg: function () {
         return 360 * 10 + getRandomInt();
     },
-    drawCircle: function drawCircle() {
-        var can = this.dom[0];
+    drawCircle: function () {
+        const can = this.dom[0];
         if (can.getContext) {
-            var ctx = can.getContext('2d');
+            const ctx = can.getContext('2d');
 
-            var drawAngledLine = function (x, y, length, angle) {
-                var radians = angle / 180 * Math.PI;
-                var endX = x + length * Math.cos(radians);
-                var endY = y - length * Math.sin(radians);
+            const drawAngledLine = function (x, y, length, angle) {
+                const radians = angle / 180 * Math.PI;
+                const endX = x + length * Math.cos(radians);
+                const endY = y - length * Math.sin(radians);
 
                 ctx.beginPath();
-                ctx.moveTo(x, y)
+                ctx.lineWidth = "0.3";
+                ctx.strokeStyle = "#000";
+                ctx.moveTo(x, y);
                 ctx.lineTo(endX, endY);
                 ctx.closePath();
                 ctx.stroke();
-            }
+            };
 
-            ctx.fillStyle = "#BD1981";
+            ctx.fillStyle = "#fff";
             ctx.beginPath();
-            ctx.arc(200, 200, 150, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.fill();
+            ctx.arc(this.x_cor, this.y_cor, this.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = "#000";
+            ctx.stroke();
 
-            ctx.strokeStyle = "#FFC8B2";
-            ctx.lineWidth = "2";
-
-            for (let i = 0; i < 21; ++i) {
-                drawAngledLine(200, 200, 150, 18 * i);
+            for (let i = 0; i < 20; ++i) {
+                drawAngledLine(this.x_cor, this.y_cor, this.radius, 18 * i);
             }
 
         } else {

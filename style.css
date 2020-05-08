@@ -22,21 +22,17 @@
 }
 
 #sub_wheel {
-    background: darkorange;
     z-index: 1000;
-    width: 25% !important;
+    /*transition-duration: 1s;*/
+}
+
+#wheel {
+    /*transition-duration: 1s;*/
 }
 
 .wheel {
-    border: 1px solid #000;
     position: absolute;
-    width: 50%;
-    overflow: hidden;
-    flex-wrap: wrap;
-    background: darkorange;
-    border-radius: 50%;
-    display: flex;
-    transition: transform 5s ease-out;
+    transition: transform ease-out;
 }
 
 body {
