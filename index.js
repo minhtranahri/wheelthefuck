@@ -1,15 +1,17 @@
 $(document).ready(function () {
-    const WHEEL_PROTO = new WHEEL($('#wheel'), '5');
-    const SUB_WHEEL = new WHEEL($('#sub_wheel'), '8');
+    const WHEEL_PROTO = new WHEEL($('#wheel'), '10');
+    // const SUB_WHEEL = new WHEEL($('#sub_wheel'), '12');
 
     WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
-    SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
+    // SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
 
     WHEEL_PROTO.dom.on('click', function () {
         const f = getRandomInt(1, 360);
         WHEEL_PROTO.spin(f);
-        SUB_WHEEL.spin(f);
+        // SUB_WHEEL.spin(f);
     });
+
+    //test($('#wheel')[0]);
 });
 
 const WHEEL = function (dom, duration) {
@@ -35,8 +37,8 @@ WHEEL.prototype = {
         }.bind(this));
         this.x_cor = this.y_cor = dom.attr('width') / 2;
         this.radius = dom.attr('width') / 2;
-        this.drawCircle();
         this.angle = 360 / this.num;
+        this.drawCircle();
     },
     spin: function (f) {
         if (this.status) {
@@ -52,7 +54,7 @@ WHEEL.prototype = {
         return this.status = !this.status;
     },
     getRandomDeg: function (f) {
-        return 360 * 10 + f * this.angle + f;
+        return 360 * 10 + f + getRandomInt(1, 20) * this.angle;
     },
     drawCircle: function () {
         const can = this.dom[0];
@@ -60,28 +62,23 @@ WHEEL.prototype = {
             const ctx = can.getContext('2d');
 
             const drawAngledLine = function (x, y, length, angle) {
-                const radians = angle / 180 * Math.PI;
-                const endX = x + length * Math.cos(radians);
-                const endY = y - length * Math.sin(radians);
 
-                ctx.beginPath();
-                ctx.lineWidth = "0.3";
-                ctx.strokeStyle = "#000";
+                const base_image = new Image(50, 50);
+                base_image.src = `./img/fff&text=${getRandomInt(1, 9)}.png`;
 
-                ctx.moveTo(x, y);
-                ctx.lineTo(endX, endY);
-                ctx.closePath();
-                ctx.stroke();
-            };
+                base_image.onload = function () {
+                    const radians = this.convertDegToRadian(angle);
+                    ctx.beginPath();
+                    ctx.fillStyle = ctx.createPattern(base_image, 'repeat');
+                    ctx.moveTo(x, y);
+                    ctx.arc(this.x_cor, this.y_cor, this.radius, radians, this.convertDegToRadian(angle + this.angle));
+                    ctx.fill();
+                }.bind(this);
 
-            ctx.fillStyle = "#fff";
-            ctx.beginPath();
-            ctx.arc(this.x_cor, this.y_cor, this.radius, 0, Math.PI * 2);
-            ctx.strokeStyle = "#000";
-            ctx.stroke();
+            }.bind(this);
 
-            for (let i = 0; i < 20; ++i) {
-                drawAngledLine(this.x_cor, this.y_cor, this.radius, 18 * i);
+            for (let i = 0; i < 1; ++i) {
+                drawAngledLine(this.x_cor, this.y_cor, this.radius, this.angle * i);
             }
 
         } else {
@@ -89,7 +86,7 @@ WHEEL.prototype = {
         }
     },
     getRotationDegrees: function (obj) {
-        let angle;
+        let angle = 0;
         const matrix = obj.css("-webkit-transform") ||
             obj.css("-moz-transform") ||
             obj.css("-ms-transform") ||
@@ -100,10 +97,11 @@ WHEEL.prototype = {
             const a = parseFloat(values[0]);
             const b = parseFloat(values[1]);
             angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-        } else {
-            angle = 0;
         }
         return (angle < 0) ? angle + 360 : angle;
+    },
+    convertDegToRadian: function (deg) {
+        return deg / 180 * Math.PI
     }
 };
 
@@ -111,4 +109,13 @@ function getRandomInt(min, max) {
     const MIN = Math.ceil(min);
     const MAX = Math.floor(max);
     return Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
+}
+
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
 }
