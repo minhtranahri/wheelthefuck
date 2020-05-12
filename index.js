@@ -1,3 +1,6 @@
+const cursorX = 769;
+const cursorY = 403;
+
 $(document).ready(function () {
     const TRIGGER_DOM = $('#submit');
     generateWheel(['left', 'right', 'straight'], false);
@@ -13,7 +16,15 @@ $(document).ready(function () {
     TRIGGER_DOM.on('submit', function () {
         const input = $('#option').val().split('\n');
         generateWheel(input, !!$('#sub_enable').prop('checked'));
-    })
+    });
+
+    // $('#wheel').mousemove(function(e) {
+    //     var pos = findPos(this);
+    //     var x = e.pageX - pos.x;
+    //     var y = e.pageY - pos.y;
+    //     var coord = "x=" + x + ", y=" + y;
+    //     $('#current').text(coord);
+    // });
 });
 
 const WHEEL = function (dom, duration, input) {
@@ -30,14 +41,27 @@ WHEEL.prototype = {
     y_cor: 0,
     num: 3,
     input: [],
+    color: [],
+    context: null,
 
     constructor: function (dom, duration, input) {
         this.dom = dom;
         this.duration = duration;
+
+        this.context = this.dom[0].getContext('2d');
+
         this.dom.on('transitionend', function () {
             this.toggleStatus();
-            console.log(this.getRotationDegrees(this.dom));
+
+        //    this.context.rotate(this.currentDeg * Math.PI / 180);
+            this.context.restore();
+
+            const p = this.context.getImageData(cursorX, cursorY, 1, 1).data;
+            const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
+
+            $('#current').text(this.input[this.color.indexOf(currentColorCode)]);
         }.bind(this));
+
         this.x_cor = this.y_cor = dom.attr('width') / 2;
         this.radius = dom.attr('width') / 2;
         this.calculateInput(input);
@@ -47,16 +71,34 @@ WHEEL.prototype = {
         this.num = input.length;
         this.angle = 360 / this.num;
         this.input = input;
+        this.color = input.map(function () {
+            return this.getRandomColor();
+        }.bind(this));
     },
     spin: function (f) {
         if (this.status) {
+            this.context.save();
             this.currentDeg = this.currentDeg + this.getRandomDeg(f);
             this.dom.css({
                 'transform': `rotate(${this.currentDeg}deg)`,
                 'transition-duration': `${this.duration}s`
             });
+
             this.toggleStatus();
         }
+    },
+    getRandomColor: function () {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+
+        if (this.color.indexOf(color) > -1) {
+            return this.getRandomColor();
+        }
+
+        return color;
     },
     toggleStatus: function () {
         return this.status = !this.status;
@@ -65,38 +107,36 @@ WHEEL.prototype = {
         return 360 * 10 + f + getRandomInt(1, 20) * this.angle;
     },
     drawAngledLine: function (x, y, length, angle, input) {
-        const ctx = this.dom[0].getContext('2d');
-
         if (typeof input !== 'string') {
             const base_image = new Image();
             base_image.src = `./img/fff&text=${getRandomInt(1, 9)}.png`;
 
             base_image.onload = function () {
                 const radians = this.convertDegToRadian(angle);
-                ctx.beginPath();
-                ctx.fillStyle = ctx.createPattern(base_image, 'repeat');
-                ctx.moveTo(x, y);
-                ctx.arc(this.x_cor, this.y_cor, this.radius, radians, this.convertDegToRadian(angle + this.angle));
-                ctx.fill();
+                this.context.beginPath();
+                this.context.fillStyle = this.context.createPattern(base_image, 'repeat');
+                this.context.moveTo(x, y);
+                this.context.arc(this.x_cor, this.y_cor, this.radius, radians, this.convertDegToRadian(angle + this.angle));
+                this.context.fill();
             }.bind(this);
         } else {
             const radians = this.convertDegToRadian(angle);
-            ctx.beginPath();
-            ctx.fillStyle = getRandomColor();
+            this.context.beginPath();
+            this.context.fillStyle = this.color[angle / this.angle];
 
-            ctx.moveTo(x, y);
-            ctx.arc(this.x_cor, this.y_cor, this.radius, radians, this.convertDegToRadian(angle + this.angle));
-            ctx.fill();
+            this.context.moveTo(x, y);
+            this.context.arc(this.x_cor, this.y_cor, this.radius, radians, this.convertDegToRadian(angle + this.angle));
+            this.context.fill();
 
             // fill text
-            ctx.save();
-            ctx.translate(this.x_cor, this.y_cor);
-            ctx.rotate(this.convertDegToRadian(angle + this.angle / 2));
-            ctx.textAlign = "center";
-            ctx.fillStyle = "#fff";
-            ctx.font = 'bold 30px sans-serif';
-            ctx.fillText(input, this.radius - 100, 0);
-            ctx.restore();
+            this.context.save();
+            this.context.translate(this.x_cor, this.y_cor);
+            this.context.rotate(this.convertDegToRadian(angle + this.angle / 2));
+            this.context.textAlign = "center";
+            this.context.fillStyle = "#fff";
+            this.context.font = 'bold 30px sans-serif';
+            this.context.fillText(input, this.radius - 100, 0);
+            this.context.restore();
         }
     },
     drawCircle: function () {
@@ -111,23 +151,26 @@ WHEEL.prototype = {
             // Fallback code goes here
         }
     },
-    getRotationDegrees: function (obj) {
-        let angle = 0;
-        const matrix = obj.css("-webkit-transform") ||
-            obj.css("-moz-transform") ||
-            obj.css("-ms-transform") ||
-            obj.css("-o-transform") ||
-            obj.css("transform");
-        if (matrix !== 'none') {
-            const values = matrix.split('(')[1].split(')')[0].split(',');
-            const a = parseFloat(values[0]);
-            const b = parseFloat(values[1]);
-            angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-        }
-        return (angle < 0) ? angle + 360 : angle;
-    },
+    // getRotationDegrees: function (obj) {
+    //     let angle = 0;
+    //     const matrix = obj.css("-webkit-transform") ||
+    //         obj.css("-moz-transform") ||
+    //         obj.css("-ms-transform") ||
+    //         obj.css("-o-transform") ||
+    //         obj.css("transform");
+    //     if (matrix !== 'none') {
+    //         const values = matrix.split('(')[1].split(')')[0].split(',');
+    //         const a = parseFloat(values[0]);
+    //         const b = parseFloat(values[1]);
+    //         angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+    //     }
+    //     return (angle < 0) ? angle + 360 : angle;
+    // },
     convertDegToRadian: function (deg) {
         return deg / 180 * Math.PI
+    },
+    show: function () {
+        this.dom.css('display', 'block');
     }
 };
 
@@ -137,24 +180,19 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
 }
 
-function getRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
 function generateWheel(input, subWheelEnabled) {
+    const subInput = $('#sub_option').val().split('\n');
+
     const WHEEL_PROTO = new WHEEL($('#wheel'), '10', input);
     WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
 
     let SUB_WHEEL;
     if (subWheelEnabled) {
-        const subInput = $('#sub_option').val().split('\n');
         SUB_WHEEL = new WHEEL($('#sub_wheel'), '12', subInput);
         SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
+        SUB_WHEEL.show();
+    } else {
+        $('#sub_wheel').css('display', 'none');
     }
 
     WHEEL_PROTO.dom.on('click', function () {
@@ -164,4 +202,23 @@ function generateWheel(input, subWheelEnabled) {
             SUB_WHEEL.spin(f);
         }
     });
+}
+
+// function findPos(obj) {
+//     let curLeft = 0, curTop = 0;
+//     if (obj.offsetParent) {
+//         do {
+//             curLeft += obj.offsetLeft;
+//             curTop += obj.offsetTop;
+//             obj = obj.offsetParent
+//         } while (obj);
+//         return {x: curLeft, y: curTop};
+//     }
+//     return undefined;
+// }
+
+function rgbToHex(r, g, b) {
+    if (r > 255 || g > 255 || b > 255)
+        throw "Invalid color component";
+    return ((r << 16) | (g << 8) | b).toString(16);
 }
