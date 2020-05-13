@@ -17,14 +17,6 @@ $(document).ready(function () {
         const input = $('#option').val().split('\n');
         generateWheel(input, !!$('#sub_enable').prop('checked'));
     });
-
-    // $('#wheel').mousemove(function(e) {
-    //     var pos = findPos(this);
-    //     var x = e.pageX - pos.x;
-    //     var y = e.pageY - pos.y;
-    //     var coord = "x=" + x + ", y=" + y;
-    //     $('#current').text(coord);
-    // });
 });
 
 const WHEEL = function (dom, duration, input) {
@@ -50,22 +42,22 @@ WHEEL.prototype = {
 
         this.context = this.dom[0].getContext('2d');
 
+        this.x_cor = this.radius = dom.attr('width') / 2;
+        this.y_cor = dom.attr('height') / 2;
+        this.calculateInput(input);
+        this.drawCircle();
+
         this.dom.on('transitionend', function () {
             this.toggleStatus();
 
-        //    this.context.rotate(this.currentDeg * Math.PI / 180);
-            this.context.restore();
+            this.redraw(this.currentDeg);
 
             const p = this.context.getImageData(cursorX, cursorY, 1, 1).data;
             const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
-
             $('#current').text(this.input[this.color.indexOf(currentColorCode)]);
-        }.bind(this));
 
-        this.x_cor = this.y_cor = dom.attr('width') / 2;
-        this.radius = dom.attr('width') / 2;
-        this.calculateInput(input);
-        this.drawCircle();
+            this.redraw(0);
+        }.bind(this));
     },
     calculateInput: function (input) {
         this.num = input.length;
@@ -77,15 +69,24 @@ WHEEL.prototype = {
     },
     spin: function (f) {
         if (this.status) {
-            this.context.save();
+            this.toggleStatus();
             this.currentDeg = this.currentDeg + this.getRandomDeg(f);
+
             this.dom.css({
                 'transform': `rotate(${this.currentDeg}deg)`,
                 'transition-duration': `${this.duration}s`
             });
-
-            this.toggleStatus();
         }
+    },
+    redraw: function (rad) {
+        this.context.clearRect(0, 0, this.radius * 2, this.radius * 2);
+        this.context.save();
+        this.context.translate(this.x_cor, this.y_cor);
+        this.context.rotate(this.convertDegToRadian(rad));
+        this.context.translate(-this.x_cor, -this.y_cor);
+
+        this.drawCircle();
+        this.context.restore();
     },
     getRandomColor: function () {
         const letters = '0123456789ABCDEF';
@@ -151,21 +152,21 @@ WHEEL.prototype = {
             // Fallback code goes here
         }
     },
-    // getRotationDegrees: function (obj) {
-    //     let angle = 0;
-    //     const matrix = obj.css("-webkit-transform") ||
-    //         obj.css("-moz-transform") ||
-    //         obj.css("-ms-transform") ||
-    //         obj.css("-o-transform") ||
-    //         obj.css("transform");
-    //     if (matrix !== 'none') {
-    //         const values = matrix.split('(')[1].split(')')[0].split(',');
-    //         const a = parseFloat(values[0]);
-    //         const b = parseFloat(values[1]);
-    //         angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-    //     }
-    //     return (angle < 0) ? angle + 360 : angle;
-    // },
+    getRotationDegrees: function (obj) {
+        let angle = 0;
+        const matrix = obj.css("-webkit-transform") ||
+            obj.css("-moz-transform") ||
+            obj.css("-ms-transform") ||
+            obj.css("-o-transform") ||
+            obj.css("transform");
+        if (matrix !== 'none') {
+            const values = matrix.split('(')[1].split(')')[0].split(',');
+            const a = parseFloat(values[0]);
+            const b = parseFloat(values[1]);
+            angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+        }
+        return (angle < 0) ? angle + 360 : angle;
+    },
     convertDegToRadian: function (deg) {
         return deg / 180 * Math.PI
     },
@@ -203,19 +204,6 @@ function generateWheel(input, subWheelEnabled) {
         }
     });
 }
-
-// function findPos(obj) {
-//     let curLeft = 0, curTop = 0;
-//     if (obj.offsetParent) {
-//         do {
-//             curLeft += obj.offsetLeft;
-//             curTop += obj.offsetTop;
-//             obj = obj.offsetParent
-//         } while (obj);
-//         return {x: curLeft, y: curTop};
-//     }
-//     return undefined;
-// }
 
 function rgbToHex(r, g, b) {
     if (r > 255 || g > 255 || b > 255)
