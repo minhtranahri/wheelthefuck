@@ -1,3 +1,7 @@
+/**
+ * coordinate of cursor
+ * @type {number}
+ */
 const cursorX = 769;
 const cursorY = 403;
 
@@ -36,6 +40,10 @@ WHEEL.prototype = {
     color: [],
     context: null,
 
+    /**
+     * canvas constructor, define canvas context, x,y-coordinate, the radius of circle
+     * register transitionend event
+     */
     constructor: function (dom, duration, input) {
         this.dom = dom;
         this.duration = duration;
@@ -49,7 +57,12 @@ WHEEL.prototype = {
 
         this.dom.on('transitionend', function () {
             this.toggleStatus();
-
+            /**
+             * transition rotate does not update the canvas image data pixel, this code below will
+             * rotate the canvas context after transitionend event fired, then get the pixel color
+             * for determined the result of wheel, and rotate back as negative radian for reset the
+             * position
+             */
             this.redraw(this.currentDeg);
 
             const p = this.context.getImageData(cursorX, cursorY, 1, 1).data;
@@ -59,6 +72,10 @@ WHEEL.prototype = {
             this.redraw(0);
         }.bind(this));
     },
+    /**
+     * calculate angle, determine number of options, get randomized colors for each options
+     * @param input {array}: the array of options
+     */
     calculateInput: function (input) {
         this.num = input.length;
         this.angle = 360 / this.num;
@@ -67,6 +84,11 @@ WHEEL.prototype = {
             return this.getRandomColor();
         }.bind(this));
     },
+    /**
+     * spin the wheel, toggle status of wheel, and active the rotate transform
+     * (status of wheel) false: the wheel is rotating, all operations be canceled, true: rotating ended
+     * @param f {number}: randomized degree
+     */
     spin: function (f) {
         if (this.status) {
             this.toggleStatus();
@@ -78,6 +100,10 @@ WHEEL.prototype = {
             });
         }
     },
+    /**
+     * redraw the canvas circle, reset all canvas data
+     * @param rad {number}: degree as radian to rotate using canvas
+     */
     redraw: function (rad) {
         this.context.clearRect(0, 0, this.radius * 2, this.radius * 2);
         this.context.save();
@@ -88,6 +114,10 @@ WHEEL.prototype = {
         this.drawCircle();
         this.context.restore();
     },
+    /**
+     * get random color as hex
+     * @returns {*|*|string|string|string}
+     */
     getRandomColor: function () {
         const letters = '0123456789ABCDEF';
         let color = '#';
@@ -104,10 +134,24 @@ WHEEL.prototype = {
     toggleStatus: function () {
         return this.status = !this.status;
     },
+    /**
+     * randomized degree will be used for rotate, this decision the result
+     * @param f {number}
+     * @returns {*} degree
+     */
     getRandomDeg: function (f) {
         return 360 * 10 + f + getRandomInt(1, 20) * this.angle;
     },
+    /**
+     * draw the arc
+     * @param x {number} x-coordinate of circle center
+     * @param y {number} y-coordinate of circle center
+     * @param length {number} the radius
+     * @param angle {number} current degree
+     * @param input {string|image} content will be fill on the circle part
+     */
     drawAngledLine: function (x, y, length, angle, input) {
+        // in case image
         if (typeof input !== 'string') {
             const base_image = new Image();
             base_image.src = `./img/fff&text=${getRandomInt(1, 9)}.png`;
@@ -125,6 +169,7 @@ WHEEL.prototype = {
             this.context.beginPath();
             this.context.fillStyle = this.color[angle / this.angle];
 
+            // draw the arc of circle
             this.context.moveTo(x, y);
             this.context.arc(this.x_cor, this.y_cor, this.radius, radians, this.convertDegToRadian(angle + this.angle));
             this.context.fill();
@@ -140,6 +185,9 @@ WHEEL.prototype = {
             this.context.restore();
         }
     },
+    /**
+     * draw each arc of circle
+     */
     drawCircle: function () {
         const can = this.dom[0];
         if (can.getContext) {
@@ -152,6 +200,11 @@ WHEEL.prototype = {
             // Fallback code goes here
         }
     },
+    /**
+     * get current degree have been rotated
+     * @param obj
+     * @returns {number}
+     */
     getRotationDegrees: function (obj) {
         let angle = 0;
         const matrix = obj.css("-webkit-transform") ||
