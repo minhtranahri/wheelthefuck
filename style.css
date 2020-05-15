@@ -17,6 +17,16 @@
     height: 800px;
 }
 
+.equal {
+    background: #fff;
+    width: 100px;
+    height: 30px;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .center_circle {
     z-index: 100000;
     width: 100px;

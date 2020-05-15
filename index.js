@@ -21,7 +21,7 @@ const WHEEL = function (dom, duration, input) {
 };
 
 WHEEL.prototype = {
-    radius_f: 50,
+    radius_f: 1,
     cursorX: 0,
     cursorY: 0,
     cursor_deg: 10,
@@ -43,6 +43,7 @@ WHEEL.prototype = {
      */
     constructor: function (dom, duration, input) {
         this.dom = dom;
+        this.equalDom = $(`#${this.dom.attr('id')}_equal`);
         this.duration = duration;
 
         this.context = this.dom[0].getContext('2d');
@@ -65,7 +66,13 @@ WHEEL.prototype = {
 
             const p = this.context.getImageData(this.cursorX, this.cursorY, 1, 1).data;
             const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
-            $('.center_circle').text(this.input[this.color.indexOf(currentColorCode)]);
+            this.equalDom.text(this.input[this.color.indexOf(currentColorCode)]);
+
+            console.table({
+                color: this.color.indexOf(currentColorCode),
+                currentColor: currentColorCode,
+                equal: this.input[this.color.indexOf(currentColorCode)]
+            });
 
             this.redraw(0);
         }.bind(this));
@@ -99,23 +106,27 @@ WHEEL.prototype = {
             });
         }
 
-        // console.log(this.cursorX, this.cursorY);
-        // this.context.beginPath();
-        // this.context.moveTo(this.cursorX, this.cursorY);
-        // this.context.lineTo(this.x_cor, this.y_cor);
-        // this.context.stroke();
+        console.log(this.dom);
+        console.log(this.cursorX, this.cursorY);
+        this.context.beginPath();
+        this.context.strokeStyle = this.getRandomColor();
+        this.context.moveTo(this.cursorX, this.cursorY);
+        this.context.lineTo(this.x_cor, this.y_cor);
+        this.context.stroke();
     },
     /**
      * calculate angle, determine number of options, get randomized colors for each options
      * @param input {array}: the array of options
      */
     calculateInput: function (input) {
+        console.log('calculateInput: ' + input.length);
         this.num = input.length;
         this.angle = 360 / this.num;
         this.input = input;
         this.color = input.map(function () {
             return this.getRandomColor();
         }.bind(this));
+        console.log(this.color);
     },
     /**
      * spin the wheel, toggle status of wheel, and active the rotate transform
@@ -159,6 +170,7 @@ WHEEL.prototype = {
         }
 
         if (this.color.indexOf(color) > -1) {
+            console.log('duplicated color: ' + color);
             return this.getRandomColor();
         }
 
@@ -200,7 +212,7 @@ WHEEL.prototype = {
         } else {
             const radians = this.convertDegToRadian(angle);
             this.context.beginPath();
-            this.context.fillStyle = this.color[angle / this.angle];
+            this.context.fillStyle = this.color[Math.round(angle / this.angle)];
 
             // draw the arc of circle
             this.context.moveTo(x, y);
@@ -213,19 +225,17 @@ WHEEL.prototype = {
             this.context.rotate(this.convertDegToRadian(angle + this.angle / 2));
             this.context.textAlign = "center";
             this.context.fillStyle = "#fff";
-            this.context.font = 'bold 30px sans-serif';
-            this.context.fillText(input, this.radius - 100, 0);
+            this.context.font = 'bold 10px sans-serif';
+            this.context.fillText(input, this.radius - 50, 0);
             this.context.restore();
         }
     },
     /**
-     * draw each arc of circle
      */
     drawCircle: function () {
         const can = this.dom[0];
         if (can.getContext) {
             for (let i = 0; i < this.num; ++i) {
-                console.log(this.input[i]);
                 this.drawAngledLine(this.x_cor, this.y_cor, this.radius, this.angle * i, this.input[i]);
             }
 
