@@ -17,14 +17,24 @@
     height: 800px;
 }
 
+button {
+    background: blanchedalmond;
+    padding: 5px;
+    border: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
 .equal {
+    border: 3px solid cadetblue;
     background: #fff;
     width: 100px;
     height: 30px;
-    border: 1px solid;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #fff;
+    transition: 0.5s ease;
 }
 
 .center_circle {

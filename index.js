@@ -66,7 +66,7 @@ WHEEL.prototype = {
 
             const p = this.context.getImageData(this.cursorX, this.cursorY, 1, 1).data;
             const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
-            this.equalDom.text(this.input[this.color.indexOf(currentColorCode)]);
+            this.equalDom.text(this.input[this.color.indexOf(currentColorCode)]).css('background', currentColorCode);
 
             console.table({
                 color: this.color.indexOf(currentColorCode),
@@ -280,12 +280,12 @@ function getRandomInt(min, max) {
 function generateWheel(input, subWheelEnabled) {
     const subInput = $('#sub_option').val().split('\n');
 
-    const WHEEL_PROTO = new WHEEL($('#wheel'), '10', input);
+    const WHEEL_PROTO = new WHEEL($('#wheel'), '12', input);
     WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
 
     let SUB_WHEEL;
     if (subWheelEnabled) {
-        SUB_WHEEL = new WHEEL($('#sub_wheel'), '12', subInput);
+        SUB_WHEEL = new WHEEL($('#sub_wheel'), '10', subInput);
         SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
         SUB_WHEEL.show();
     } else {
