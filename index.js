@@ -1,10 +1,3 @@
-/**
- * coordinate of cursor
- * @type {number}
- */
-const cursorX = 769;
-const cursorY = 403;
-
 $(document).ready(function () {
     const TRIGGER_DOM = $('#submit');
     generateWheel(['left', 'right', 'straight'], false);
@@ -28,6 +21,10 @@ const WHEEL = function (dom, duration, input) {
 };
 
 WHEEL.prototype = {
+    radius_f: 50,
+    cursorX: 0,
+    cursorY: 0,
+    cursor_deg: 10,
     dom: '',
     status: true,
     duration: '0.5s',
@@ -54,6 +51,7 @@ WHEEL.prototype = {
         this.y_cor = dom.attr('height') / 2;
         this.calculateInput(input);
         this.drawCircle();
+        this.positioningTheCursor();
 
         this.dom.on('transitionend', function () {
             this.toggleStatus();
@@ -65,12 +63,47 @@ WHEEL.prototype = {
              */
             this.redraw(this.currentDeg);
 
-            const p = this.context.getImageData(cursorX, cursorY, 1, 1).data;
+            const p = this.context.getImageData(this.cursorX, this.cursorY, 1, 1).data;
             const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
-            $('#current').text(this.input[this.color.indexOf(currentColorCode)]);
+            $('.center_circle').text(this.input[this.color.indexOf(currentColorCode)]);
 
             this.redraw(0);
         }.bind(this));
+    },
+    /**
+     * calculate and draw cursor coordinate
+     */
+    positioningTheCursor: function () {
+        const BLOCK_HEIGHT = this.y_cor * 2; // canvas height
+        // calculate opposite side of triangle = nearby side (the radius) * tan(10deg);
+        let OPPOSITE_SIDE = Math.tan(this.convertDegToRadian(this.cursor_deg)) * this.radius;
+        const TOP_DISTANCE = this.radius - OPPOSITE_SIDE;
+        const POSITION = ((TOP_DISTANCE / BLOCK_HEIGHT) * 100).toFixed(0);
+
+        // recalculate after fixed
+        OPPOSITE_SIDE = this.radius - (POSITION / 100 * BLOCK_HEIGHT);
+
+        console.log('cursor position: ' + POSITION);
+
+        const RAD = Math.atan(OPPOSITE_SIDE / this.radius);
+        console.log(RAD);
+
+        // calculate cursor coordinate
+        this.cursorX = Math.cos(RAD) * (this.radius - this.radius_f) + this.radius;
+        this.cursorY = this.y_cor - Math.sin(RAD) * (this.radius - this.radius_f);
+
+        if (this.radius === 400) {
+            $('#pointer').css({
+                'top': `${POSITION}%`,
+                'transform': `rotate(-${RAD}rad)`
+            });
+        }
+
+        // console.log(this.cursorX, this.cursorY);
+        // this.context.beginPath();
+        // this.context.moveTo(this.cursorX, this.cursorY);
+        // this.context.lineTo(this.x_cor, this.y_cor);
+        // this.context.stroke();
     },
     /**
      * calculate angle, determine number of options, get randomized colors for each options
@@ -200,26 +233,26 @@ WHEEL.prototype = {
             // Fallback code goes here
         }
     },
-    /**
-     * get current degree have been rotated
-     * @param obj
-     * @returns {number}
-     */
-    getRotationDegrees: function (obj) {
-        let angle = 0;
-        const matrix = obj.css("-webkit-transform") ||
-            obj.css("-moz-transform") ||
-            obj.css("-ms-transform") ||
-            obj.css("-o-transform") ||
-            obj.css("transform");
-        if (matrix !== 'none') {
-            const values = matrix.split('(')[1].split(')')[0].split(',');
-            const a = parseFloat(values[0]);
-            const b = parseFloat(values[1]);
-            angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-        }
-        return (angle < 0) ? angle + 360 : angle;
-    },
+    // /**
+    //  * get current degree have been rotated
+    //  * @param obj
+    //  * @returns {number}
+    //  */
+    // getRotationDegrees: function (obj) {
+    //     let angle = 0;
+    //     const matrix = obj.css("-webkit-transform") ||
+    //         obj.css("-moz-transform") ||
+    //         obj.css("-ms-transform") ||
+    //         obj.css("-o-transform") ||
+    //         obj.css("transform");
+    //     if (matrix !== 'none') {
+    //         const values = matrix.split('(')[1].split(')')[0].split(',');
+    //         const a = parseFloat(values[0]);
+    //         const b = parseFloat(values[1]);
+    //         angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+    //     }
+    //     return (angle < 0) ? angle + 360 : angle;
+    // },
     convertDegToRadian: function (deg) {
         return deg / 180 * Math.PI
     },

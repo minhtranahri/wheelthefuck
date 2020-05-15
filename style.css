@@ -8,13 +8,25 @@
     justify-content: center;
 }
 
+.inner {
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    width: 800px;
+    height: 800px;
+}
+
 .center_circle {
-    z-index: 10000;
+    z-index: 100000;
     width: 100px;
     height: 100px;
     border-radius: 50%;
     background: inherit;
     position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .config_container {
@@ -61,17 +73,17 @@ body {
 
 #pointer {
     position: absolute;
-    right: 18%;
+    right: -2%;
     z-index: 10000;
-    transform: rotate(-5deg);
+    transform: rotate(-10deg);
 }
 
 .arrow-right {
     width: 0;
     height: 0;
-    border-top: 15px solid transparent;
+    border-top: 2px solid transparent;
     border-bottom: 15px solid transparent;
-    border-right: 60px solid green;
+    border-right: 50px solid darkorange;
 }
 
 .opacity_low {
