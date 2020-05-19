@@ -23,6 +23,8 @@ button {
     border: 0;
     box-sizing: border-box;
     cursor: pointer;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    margin: 3px;
 }
 
 .equal {
@@ -55,6 +57,8 @@ button {
     width: 30%;
     background: beige;
     flex-direction: column;
+    box-sizing: border-box;
+    padding: 10px;
 }
 
 .container {
@@ -84,6 +88,7 @@ button {
 body {
     margin: 0;
     padding: 0;
+    overflow-y: hidden;
 }
 
 .wheel_item {
@@ -139,7 +144,8 @@ body {
 }
 
 textarea {
-    resize: vertical;
+    resize: none;
+    margin: 5px;
 }
 
 /*.checkbox_container {*/
@@ -154,8 +160,13 @@ textarea {
 .tooltip {
     position: relative;
     display: inline-block;
-    border-bottom: 1px dotted black;
     cursor: pointer;
+    width: 16px;
+    background: #000;
+    color: #fff;
+    text-align: center;
+    font-size: 13px;
+    border-radius: 50%;
 }
 
 .tooltip .tooltiptext {

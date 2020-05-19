@@ -1,71 +1,15 @@
+const WHEEL = function (dom, duration, input) {
+    this.constructor(dom, duration, input);
+};
+
 const TRIGGER_DOM = $('#submit');
 const OPTION = $('#option');
 const SUB_OPTION = $('#sub_option');
 const OUTER_SPD = 10;
 const INNER_SPD = 12;
-
-$(document).ready(function () {
-    generateWheel(['left', 'right', 'straight'], false);
-    $('#outer_speed').val(OUTER_SPD);
-    $('#inner_speed').val(INNER_SPD);
-
-    $('#option, #sub_option').on('blur', function () {
-        TRIGGER_DOM.trigger('submit');
-    });
-
-    $('#sub_enable, #outer_speed, #inner_speed').on('change', function () {
-        TRIGGER_DOM.trigger('submit');
-    });
-
-    TRIGGER_DOM.on('submit', function () {
-        const input = OPTION.val().split('\n');
-        generateWheel(input, !!$('#sub_enable').prop('checked'));
-    });
-
-    $('#sync').on('click', function () {
-        const outer = OPTION.val().split('\n');
-        const inner = SUB_OPTION.val().split('\n');
-
-        if (outer.length !== inner.length) {
-            outer.length > inner.length ? outer.splice(inner.length, outer.length) : inner.splice(outer.length, inner.length);
-            OPTION.val(outer.join('\n'));
-            SUB_OPTION.val(inner.join('\n'));
-            TRIGGER_DOM.trigger('submit');
-        }
-    });
-
-    $('#balance').on('click', function () {
-        const outer = OPTION.val().split('\n');
-        const inner = SUB_OPTION.val().split('\n');
-
-        if (outer.length !== inner.length) {
-            let split;
-
-            if (outer.length > inner.length) {
-                split = _.chunk(outer, inner.length)[1];
-                outer.splice(inner.length, outer.length);
-            } else {
-                split = _.chunk(inner, outer.length)[1];
-                inner.splice(outer.length, inner.length);
-            }
-
-            const splitLength = split.length / 2;
-
-            if (split.length % 2 !== 0) {
-                split.splice(split.length - 1, split.length)
-            }
-
-            OPTION.val([...outer, ..._.chunk(split, splitLength)[0]].join('\n'));
-            SUB_OPTION.val([...inner, ..._.chunk(split, splitLength)[1]].join('\n'));
-
-            TRIGGER_DOM.trigger('submit');
-        }
-    });
-});
-
-const WHEEL = function (dom, duration, input) {
-    this.constructor(dom, duration, input);
-};
+const DEFAULT_INPUT = ['left', 'right', 'straight'];
+const OUTER_DOM = $('#wheel');
+const INNER_DOM = $('#sub_wheel');
 
 WHEEL.prototype = {
     radius_f: 1,
@@ -89,20 +33,13 @@ WHEEL.prototype = {
      * register transitionend event
      */
     constructor: function (dom, duration, input) {
-        this.dom = dom;
-        this.equalDom = $(`#${this.dom.attr('id')}_equal`);
-        this.duration = duration;
-
-        this.context = this.dom[0].getContext('2d');
-
-        this.x_cor = this.radius = dom.attr('width') / 2;
-        this.y_cor = dom.attr('height') / 2;
-        this.calculateInput(input);
-        this.drawCircle();
-        this.positioningTheCursor();
+        this.registerParameters(dom, duration, input);
 
         this.dom.on('transitionend', function () {
-            this.toggleStatus();
+            console.log('getRotationDegrees:' + this.getRotationDegrees(this.dom));
+            console.log('current deg: ' + this.currentDeg);
+            console.log('----------------');
+            this.toggleStatus(true);
             /**
              * transition rotate does not update the canvas image data pixel, this code below will
              * rotate the canvas context after transitionend event fired, then get the pixel color
@@ -115,14 +52,29 @@ WHEEL.prototype = {
             const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
             this.equalDom.text(this.input[this.color.indexOf(currentColorCode)]).css('background', currentColorCode);
 
-            console.table({
-                color: this.color.indexOf(currentColorCode),
-                currentColor: currentColorCode,
-                equal: this.input[this.color.indexOf(currentColorCode)]
-            });
+            // console.table({
+            //     color: this.color.indexOf(currentColorCode),
+            //     currentColor: currentColorCode,
+            //     equal: this.input[this.color.indexOf(currentColorCode)]
+            // });
 
             this.redraw(0);
         }.bind(this));
+    },
+    registerParameters: function (dom, duration, input) {
+        if (this.status) {
+            this.dom = dom;
+            this.equalDom = $(`#${this.dom.attr('id')}_equal`);
+            this.duration = duration;
+
+            this.context = this.dom[0].getContext('2d');
+
+            this.x_cor = this.radius = dom.attr('width') / 2;
+            this.y_cor = dom.attr('height') / 2;
+            this.calculateInput(input);
+            this.drawCircle();
+            this.positioningTheCursor();
+        }
     },
     /**
      * calculate and draw cursor coordinate
@@ -153,13 +105,13 @@ WHEEL.prototype = {
             });
         }
 
-        console.log(this.dom);
-        console.log(this.cursorX, this.cursorY);
-        this.context.beginPath();
-        this.context.strokeStyle = this.getRandomColor();
-        this.context.moveTo(this.cursorX, this.cursorY);
-        this.context.lineTo(this.x_cor, this.y_cor);
-        this.context.stroke();
+        // console.log(this.dom);
+        // console.log(this.cursorX, this.cursorY);
+        // this.context.beginPath();
+        // this.context.strokeStyle = this.getRandomColor();
+        // this.context.moveTo(this.cursorX, this.cursorY);
+        // this.context.lineTo(this.x_cor, this.y_cor);
+        // this.context.stroke();
     },
     /**
      * calculate angle, determine number of options, get randomized colors for each options
@@ -182,7 +134,7 @@ WHEEL.prototype = {
      */
     spin: function (f) {
         if (this.status) {
-            this.toggleStatus();
+            this.toggleStatus(false);
             this.currentDeg = this.currentDeg + this.getRandomDeg(f);
 
             this.dom.css({
@@ -223,8 +175,8 @@ WHEEL.prototype = {
 
         return color;
     },
-    toggleStatus: function () {
-        return this.status = !this.status;
+    toggleStatus: function (status) {
+        this.status = status;
     },
     /**
      * randomized degree will be used for rotate, this decision the result
@@ -295,21 +247,21 @@ WHEEL.prototype = {
     //  * @param obj
     //  * @returns {number}
     //  */
-    // getRotationDegrees: function (obj) {
-    //     let angle = 0;
-    //     const matrix = obj.css("-webkit-transform") ||
-    //         obj.css("-moz-transform") ||
-    //         obj.css("-ms-transform") ||
-    //         obj.css("-o-transform") ||
-    //         obj.css("transform");
-    //     if (matrix !== 'none') {
-    //         const values = matrix.split('(')[1].split(')')[0].split(',');
-    //         const a = parseFloat(values[0]);
-    //         const b = parseFloat(values[1]);
-    //         angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-    //     }
-    //     return (angle < 0) ? angle + 360 : angle;
-    // },
+    getRotationDegrees: function (obj) {
+        let angle = 0;
+        const matrix = obj.css("-webkit-transform") ||
+            obj.css("-moz-transform") ||
+            obj.css("-ms-transform") ||
+            obj.css("-o-transform") ||
+            obj.css("transform");
+        if (matrix !== 'none') {
+            const values = matrix.split('(')[1].split(')')[0].split(',');
+            const a = parseFloat(values[0]);
+            const b = parseFloat(values[1]);
+            angle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+        }
+        return (angle < 0) ? angle + 360 : angle;
+    },
     convertDegToRadian: function (deg) {
         return deg / 180 * Math.PI
     },
@@ -317,6 +269,90 @@ WHEEL.prototype = {
         this.dom.css('display', 'block');
     }
 };
+
+const WHEEL_PROTO = new WHEEL(OUTER_DOM, OUTER_SPD, DEFAULT_INPUT);
+const SUB_WHEEL = new WHEEL(INNER_DOM, INNER_SPD, DEFAULT_INPUT);
+
+WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
+SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
+
+INNER_DOM.css('display', 'none');
+SUB_WHEEL.toggleStatus(false);
+
+$(document).ready(function () {
+    $('#outer_speed').val(OUTER_SPD);
+    $('#inner_speed').val(INNER_SPD);
+
+    WHEEL_PROTO.dom.on('click', function () {
+        const f = getRandomInt(1, 360);
+        WHEEL_PROTO.spin(f);
+        SUB_WHEEL.spin(f);
+    });
+
+    $('#option, #sub_option').on('blur', function () {
+        TRIGGER_DOM.trigger('submit');
+    });
+
+    $('#outer_speed, #inner_speed').on('change', function () {
+        TRIGGER_DOM.trigger('submit');
+    });
+
+    $('#sub_enable').on('change', function () {
+        const checked = !!$(this).prop('checked');
+        if (checked) {
+            SUB_WHEEL.show();
+        } else {
+            INNER_DOM.css('display', 'none');
+        }
+
+        SUB_WHEEL.toggleStatus(checked);
+    });
+
+    TRIGGER_DOM.on('submit', function () {
+        const input = OPTION.val().split('\n');
+        generateWheel(input, !!$('#sub_enable').prop('checked'));
+    });
+
+    $('#sync').on('click', function () {
+        const outer = OPTION.val().split('\n');
+        const inner = SUB_OPTION.val().split('\n');
+
+        if (outer.length !== inner.length) {
+            outer.length > inner.length ? outer.splice(inner.length, outer.length) : inner.splice(outer.length, inner.length);
+            OPTION.val(outer.join('\n'));
+            SUB_OPTION.val(inner.join('\n'));
+            TRIGGER_DOM.trigger('submit');
+        }
+    });
+
+    $('#balance').on('click', function () {
+        const outer = OPTION.val().split('\n');
+        const inner = SUB_OPTION.val().split('\n');
+
+        if (outer.length !== inner.length) {
+            let split;
+
+            if (outer.length > inner.length) {
+                split = _.chunk(outer, inner.length)[1];
+                outer.splice(inner.length, outer.length);
+            } else {
+                split = _.chunk(inner, outer.length)[1];
+                inner.splice(outer.length, inner.length);
+            }
+
+            const splitLength = split.length / 2;
+
+            if (split.length % 2 !== 0) {
+                split.splice(split.length - 1, split.length)
+            }
+
+            OPTION.val([...outer, ..._.chunk(split, splitLength)[0]].join('\n'));
+            SUB_OPTION.val([...inner, ..._.chunk(split, splitLength)[1]].join('\n'));
+
+            TRIGGER_DOM.trigger('submit');
+        }
+    });
+});
 
 function getRandomInt(min, max) {
     const MIN = Math.ceil(min);
@@ -329,25 +365,8 @@ function generateWheel(input, subWheelEnabled) {
     const outerSpd = $('#outer_speed').val();
     const innerSpd = $('#inner_speed').val();
 
-    const WHEEL_PROTO = new WHEEL($('#wheel'), outerSpd, input);
-    WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
-
-    let SUB_WHEEL;
-    if (subWheelEnabled) {
-        SUB_WHEEL = new WHEEL($('#sub_wheel'), innerSpd, subInput);
-        SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
-        SUB_WHEEL.show();
-    } else {
-        $('#sub_wheel').css('display', 'none');
-    }
-
-    WHEEL_PROTO.dom.on('click', function () {
-        const f = getRandomInt(1, 360);
-        WHEEL_PROTO.spin(f);
-        if (subWheelEnabled) {
-            SUB_WHEEL.spin(f);
-        }
-    });
+    WHEEL_PROTO.registerParameters(OUTER_DOM, outerSpd, input);
+    SUB_WHEEL.registerParameters(INNER_DOM, innerSpd, subInput);
 }
 
 function rgbToHex(r, g, b) {
