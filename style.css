@@ -110,10 +110,80 @@ body {
     opacity: 0.3;
 }
 
+.checkbox_container {
+    display: grid;
+    grid-template-areas: "enable_inner_container synchronous_container ."
+                         ". balance_container ."
+                         "outer_speed_container . ."
+                         "inner_speed_container . ."
+}
+
+#enable_inner_container {
+    grid-area: enable_inner_container;
+}
+
+#synchronous_container {
+    grid-area: synchronous_container;
+}
+
+#balance_container {
+    grid-area: balance_container;
+}
+
+#outer_speed_container {
+    grid-area: outer_speed_container;
+}
+
+#inner_speed_container {
+    grid-area: inner_speed_container;
+}
+
 textarea {
     resize: vertical;
 }
 
-.checkbox_container {
-    display: flex;
+/*.checkbox_container {*/
+/*    display: flex;*/
+/*    flex-wrap: wrap;*/
+/*}*/
+
+.control_item {
+    padding-right: 5px;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+    cursor: pointer;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -60px;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
 }
