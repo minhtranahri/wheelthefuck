@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <title>Wheel the fuck</title>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').then(function(registration) {
+                    // Registration was successful
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    // registration failed :(
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </head>
 <body>
 <div class="container">
@@ -18,17 +31,41 @@
         <div class="center_circle"></div>
     </div>
     <div class="config_container">
+        <label for="option">Outer wheel:</label>
         <textarea cols="20" rows="20" id="option"></textarea>
-        <div class="checkbox_container">
-            <input type="checkbox" id="sub_enable">
-            <label for="sub_enable">Enable inner wheel</label>
-            <button id="sub_sync">Synchronous both wheel</button>
-        </div>
+        <label for="sub_option">Inner wheel:</label>
         <textarea cols="20" rows="20" id="sub_option"></textarea>
         <div id="submit"></div>
+        <div class="checkbox_container">
+            <div class="control_item" id="enable_inner_container">
+                <input type="checkbox" id="sub_enable">
+                <label for="sub_enable">Enable inner wheel</label>
+            </div>
+            <div class="control_item" id="synchronous_container">
+                <button id="sync">Synchronous both wheel</button>
+                <div class="tooltip">?
+                    <span class="tooltiptext">Giảm vòng quay nhiều hơn bằng vòng quay ít hơn</span>
+                </div>
+            </div>
+            <div class="control_item" id="balance_container">
+                <button id="balance">Auto balance</button>
+                <div class="tooltip">?
+                    <span class="tooltiptext">Tự cân bằng, chia đều cho 2 bên, loại bỏ phần lẻ</span>
+                </div>
+            </div>
+            <div class="control_item" id="outer_speed_container">
+                <label for="outer_speed">Outer Speed:</label>
+                <input id="outer_speed" type="range" min="1" max="20">
+            </div>
+            <div class="control_item" id="inner_speed_container">
+                <label for="outer_speed">Inner Speed:</label>
+                <input id="inner_speed" type="range" min="1" max="20">
+            </div>
+        </div>
     </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="libs/$.js"></script>
+<script src="libs/_.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

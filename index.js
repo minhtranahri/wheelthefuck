@@ -1,18 +1,65 @@
+const TRIGGER_DOM = $('#submit');
+const OPTION = $('#option');
+const SUB_OPTION = $('#sub_option');
+const OUTER_SPD = 10;
+const INNER_SPD = 12;
+
 $(document).ready(function () {
-    const TRIGGER_DOM = $('#submit');
     generateWheel(['left', 'right', 'straight'], false);
+    $('#outer_speed').val(OUTER_SPD);
+    $('#inner_speed').val(INNER_SPD);
 
     $('#option, #sub_option').on('blur', function () {
         TRIGGER_DOM.trigger('submit');
     });
 
-    $('#sub_enable').on('change', function () {
+    $('#sub_enable, #outer_speed, #inner_speed').on('change', function () {
         TRIGGER_DOM.trigger('submit');
     });
 
     TRIGGER_DOM.on('submit', function () {
-        const input = $('#option').val().split('\n');
+        const input = OPTION.val().split('\n');
         generateWheel(input, !!$('#sub_enable').prop('checked'));
+    });
+
+    $('#sync').on('click', function () {
+        const outer = OPTION.val().split('\n');
+        const inner = SUB_OPTION.val().split('\n');
+
+        if (outer.length !== inner.length) {
+            outer.length > inner.length ? outer.splice(inner.length, outer.length) : inner.splice(outer.length, inner.length);
+            OPTION.val(outer.join('\n'));
+            SUB_OPTION.val(inner.join('\n'));
+            TRIGGER_DOM.trigger('submit');
+        }
+    });
+
+    $('#balance').on('click', function () {
+        const outer = OPTION.val().split('\n');
+        const inner = SUB_OPTION.val().split('\n');
+
+        if (outer.length !== inner.length) {
+            let split;
+
+            if (outer.length > inner.length) {
+                split = _.chunk(outer, inner.length)[1];
+                outer.splice(inner.length, outer.length);
+            } else {
+                split = _.chunk(inner, outer.length)[1];
+                inner.splice(outer.length, inner.length);
+            }
+
+            const splitLength = split.length / 2;
+
+            if (split.length % 2 !== 0) {
+                split.splice(split.length - 1, split.length)
+            }
+
+            OPTION.val([...outer, ..._.chunk(split, splitLength)[0]].join('\n'));
+            SUB_OPTION.val([...inner, ..._.chunk(split, splitLength)[1]].join('\n'));
+
+            TRIGGER_DOM.trigger('submit');
+        }
     });
 });
 
@@ -278,14 +325,16 @@ function getRandomInt(min, max) {
 }
 
 function generateWheel(input, subWheelEnabled) {
-    const subInput = $('#sub_option').val().split('\n');
+    const subInput = SUB_OPTION.val().split('\n');
+    const outerSpd = $('#outer_speed').val();
+    const innerSpd = $('#inner_speed').val();
 
-    const WHEEL_PROTO = new WHEEL($('#wheel'), '12', input);
+    const WHEEL_PROTO = new WHEEL($('#wheel'), outerSpd, input);
     WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
 
     let SUB_WHEEL;
     if (subWheelEnabled) {
-        SUB_WHEEL = new WHEEL($('#sub_wheel'), '10', subInput);
+        SUB_WHEEL = new WHEEL($('#sub_wheel'), innerSpd, subInput);
         SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
         SUB_WHEEL.show();
     } else {
