@@ -17,7 +17,8 @@ WHEEL.prototype = {
     cursorY: 0,
     cursor_deg: 10,
     dom: '',
-    status: true,
+    isSpinning: false,
+    isEnable: true,
     duration: '0.5s',
     currentDeg: 0,
     radius: 0,
@@ -35,11 +36,15 @@ WHEEL.prototype = {
     constructor: function (dom, duration, input) {
         this.registerParameters(dom, duration, input);
 
+        this.dom.on('transitionstart', function () {
+            this.setIsSpinning(true);
+            toggleControlPanel(true);
+        }.bind(this));
+
         this.dom.on('transitionend', function () {
-            console.log('getRotationDegrees:' + this.getRotationDegrees(this.dom));
-            console.log('current deg: ' + this.currentDeg);
-            console.log('----------------');
-            this.toggleStatus(true);
+            console.log('deg rotated: ' + this.getRotationDegrees(this.dom));
+            this.setIsSpinning(false);
+            toggleControlPanel(false);
             /**
              * transition rotate does not update the canvas image data pixel, this code below will
              * rotate the canvas context after transitionend event fired, then get the pixel color
@@ -62,7 +67,7 @@ WHEEL.prototype = {
         }.bind(this));
     },
     registerParameters: function (dom, duration, input) {
-        if (this.status) {
+        if (!this.isSpinning) {
             this.dom = dom;
             this.equalDom = $(`#${this.dom.attr('id')}_equal`);
             this.duration = duration;
@@ -119,6 +124,7 @@ WHEEL.prototype = {
      */
     calculateInput: function (input) {
         console.log('calculateInput: ' + input.length);
+        input = input || DEFAULT_INPUT;
         this.num = input.length;
         this.angle = 360 / this.num;
         this.input = input;
@@ -133,8 +139,7 @@ WHEEL.prototype = {
      * @param f {number}: randomized degree
      */
     spin: function (f) {
-        if (this.status) {
-            this.toggleStatus(false);
+        if (!this.isSpinning && this.isEnable) {
             this.currentDeg = this.currentDeg + this.getRandomDeg(f);
 
             this.dom.css({
@@ -175,8 +180,11 @@ WHEEL.prototype = {
 
         return color;
     },
-    toggleStatus: function (status) {
-        this.status = status;
+    setIsSpinning: function (status) {
+        this.isSpinning = status;
+    },
+    setIsEnable: function (status) {
+        this.isEnable = status;
     },
     /**
      * randomized degree will be used for rotate, this decision the result
@@ -229,8 +237,6 @@ WHEEL.prototype = {
             this.context.restore();
         }
     },
-    /**
-     */
     drawCircle: function () {
         const can = this.dom[0];
         if (can.getContext) {
@@ -242,11 +248,11 @@ WHEEL.prototype = {
             // Fallback code goes here
         }
     },
-    // /**
-    //  * get current degree have been rotated
-    //  * @param obj
-    //  * @returns {number}
-    //  */
+    /**
+     * get current degree have been rotated
+     * @param obj
+     * @returns {number}
+     */
     getRotationDegrees: function (obj) {
         let angle = 0;
         const matrix = obj.css("-webkit-transform") ||
@@ -267,6 +273,19 @@ WHEEL.prototype = {
     },
     show: function () {
         this.dom.css('display', 'block');
+    },
+    hide: function () {
+        this.dom.css('display', 'none');
+    },
+    rotate: function (deg) {
+        this.dom.css({
+            'transform': `rotate(${deg}deg)`,
+            'transition-duration': '1s'
+        });
+    },
+    toggle: function (bool) {
+        bool ? this.show() : this.hide();
+        this.setIsEnable(bool);
     }
 };
 
@@ -276,8 +295,7 @@ const SUB_WHEEL = new WHEEL(INNER_DOM, INNER_SPD, DEFAULT_INPUT);
 WHEEL_PROTO.dom.height(WHEEL_PROTO.dom.width());
 SUB_WHEEL.dom.height(SUB_WHEEL.dom.width());
 
-INNER_DOM.css('display', 'none');
-SUB_WHEEL.toggleStatus(false);
+SUB_WHEEL.toggle(!!$(this).prop('checked'));
 
 $(document).ready(function () {
     $('#outer_speed').val(OUTER_SPD);
@@ -298,19 +316,15 @@ $(document).ready(function () {
     });
 
     $('#sub_enable').on('change', function () {
-        const checked = !!$(this).prop('checked');
-        if (checked) {
-            SUB_WHEEL.show();
+        if (SUB_WHEEL.isSpinning || WHEEL_PROTO.isSpinning) {
+            // TODO: is spinning goes here
         } else {
-            INNER_DOM.css('display', 'none');
+            SUB_WHEEL.toggle(!!$(this).prop('checked'))
         }
-
-        SUB_WHEEL.toggleStatus(checked);
     });
 
     TRIGGER_DOM.on('submit', function () {
-        const input = OPTION.val().split('\n');
-        generateWheel(input, !!$('#sub_enable').prop('checked'));
+        generateWheel();
     });
 
     $('#sync').on('click', function () {
@@ -323,6 +337,8 @@ $(document).ready(function () {
             SUB_OPTION.val(inner.join('\n'));
             TRIGGER_DOM.trigger('submit');
         }
+
+        SUB_WHEEL.rotate(WHEEL_PROTO.getRotationDegrees(WHEEL_PROTO.dom));
     });
 
     $('#balance').on('click', function () {
@@ -351,6 +367,8 @@ $(document).ready(function () {
 
             TRIGGER_DOM.trigger('submit');
         }
+
+        SUB_WHEEL.rotate(WHEEL_PROTO.getRotationDegrees(WHEEL_PROTO.dom));
     });
 });
 
@@ -360,8 +378,9 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
 }
 
-function generateWheel(input, subWheelEnabled) {
-    const subInput = SUB_OPTION.val().split('\n');
+function generateWheel() {
+    const input = OPTION.val() ? OPTION.val().split('\n') : [];
+    const subInput = SUB_OPTION.val() ? SUB_OPTION.val().split('\n') : [];
     const outerSpd = $('#outer_speed').val();
     const innerSpd = $('#inner_speed').val();
 
@@ -373,4 +392,8 @@ function rgbToHex(r, g, b) {
     if (r > 255 || g > 255 || b > 255)
         throw "Invalid color component";
     return ((r << 16) | (g << 8) | b).toString(16);
+}
+
+function toggleControlPanel(bool) {
+    $('.config_container').find('input, textarea, button, select').prop('disabled', bool);
 }
