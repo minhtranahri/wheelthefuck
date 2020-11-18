@@ -6,29 +6,32 @@ const urlsToCache = [
     './'
 ];
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function (event) {
     // Perform install steps
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(function(cache) {
-                return cache.addAll(urlsToCache);
-            })
+        caches.open(CACHE_NAME).then(function (cache) {
+            for (let i in urlsToCache) {
+                cache.delete(urlsToCache[i]).then(function () {
+                    return cache.add(urlsToCache[i]);
+                });
+            }
+        })
     );
 });
 
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', function (event) {
     event.respondWith(
         caches.match(event.request)
-            .then(function(response) {
+            .then(function (response) {
                 // Cache hit - return response
                 if (response) {
                     return response;
                 }
 
                 return fetch(event.request).then(
-                    function(response) {
+                    function (response) {
                         // Check if we received a valid response
-                        if(!response || response.status !== 200 || response.type !== 'basic') {
+                        if (!response || response.status !== 200 || response.type !== 'basic') {
                             return response;
                         }
 
@@ -39,7 +42,7 @@ self.addEventListener('fetch', function(event) {
                         const responseToCache = response.clone();
 
                         caches.open(CACHE_NAME)
-                            .then(function(cache) {
+                            .then(function (cache) {
                                 cache.put(event.request, responseToCache);
                             });
 

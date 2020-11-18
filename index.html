@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <title>Wheel the fuck</title>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js').then(function(registration) {
-                    // Registration was successful
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, function(err) {
-                    // registration failed :(
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
-    </script>
+<!--    <script>-->
+<!--        if ('serviceWorker' in navigator) {-->
+<!--            window.addEventListener('load', function() {-->
+<!--                navigator.serviceWorker.register('./sw.js').then(function(registration) {-->
+<!--                    // Registration was successful-->
+<!--                    console.log('ServiceWorker registration successful with scope: ', registration.scope);-->
+<!--                }, function(err) {-->
+<!--                    // registration failed :(-->
+<!--                    console.log('ServiceWorker registration failed: ', err);-->
+<!--                });-->
+<!--            });-->
+<!--        }-->
+<!--    </script>-->
 </head>
 <body>
 <div class="container">
@@ -51,6 +51,12 @@
                 <button id="balance">Auto balance</button>
                 <div class="tooltip">?
                     <span class="tooltiptext">Tự cân bằng, chia đều cho 2 bên, loại bỏ phần lẻ</span>
+                </div>
+            </div>
+            <div class="control_item" id="remove_duplicates">
+                <button id="unique">Remove Duplicates</button>
+                <div class="tooltip">?
+                    <span class="tooltiptext">Loại bỏ options trùng</span>
                 </div>
             </div>
             <div class="control_item" id="outer_speed_container">

@@ -53,9 +53,9 @@ WHEEL.prototype = {
              */
             this.redraw(this.currentDeg);
 
-            const p = this.context.getImageData(this.cursorX, this.cursorY, 1, 1).data;
-            const currentColorCode = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6).toUpperCase();
-            this.equalDom.text(this.input[this.color.indexOf(currentColorCode)]).css('background', currentColorCode);
+            [r, g, b] = this.context.getImageData(this.cursorX, this.cursorY, 1, 1).data;
+            const currentColorCode = "#" + ("000000" + rgbToHex(r, g, b)).slice(-6).toUpperCase();
+            this.equalDom.text(compactString(this.input[this.color.indexOf(currentColorCode)])).css('background', currentColorCode);
 
             // console.table({
             //     color: this.color.indexOf(currentColorCode),
@@ -241,7 +241,7 @@ WHEEL.prototype = {
         const can = this.dom[0];
         if (can.getContext) {
             for (let i = 0; i < this.num; ++i) {
-                this.drawAngledLine(this.x_cor, this.y_cor, this.radius, this.angle * i, this.input[i]);
+                this.drawAngledLine(this.x_cor, this.y_cor, this.radius, this.angle * i, compactString(this.input[i]));
             }
 
         } else {
@@ -327,23 +327,28 @@ $(document).ready(function () {
         generateWheel();
     });
 
+    /**
+     * buttons
+     */
+
+    $('#unique').on('click', function () {
+        [outer, inner] = getBothWheelValue();
+        valueWheelPropertySync(removeDuplicates(outer), removeDuplicates(inner))
+    });
+
     $('#sync').on('click', function () {
-        const outer = OPTION.val().split('\n');
-        const inner = SUB_OPTION.val().split('\n');
+        [outer, inner] = getBothWheelValue();
 
         if (outer.length !== inner.length) {
             outer.length > inner.length ? outer.splice(inner.length, outer.length) : inner.splice(outer.length, inner.length);
-            OPTION.val(outer.join('\n'));
-            SUB_OPTION.val(inner.join('\n'));
-            TRIGGER_DOM.trigger('submit');
+            valueWheelPropertySync(outer, inner)
         }
 
         SUB_WHEEL.rotate(WHEEL_PROTO.getRotationDegrees(WHEEL_PROTO.dom));
     });
 
     $('#balance').on('click', function () {
-        const outer = OPTION.val().split('\n');
-        const inner = SUB_OPTION.val().split('\n');
+        [outer, inner] = getBothWheelValue();
 
         if (outer.length !== inner.length) {
             let split;
@@ -362,10 +367,7 @@ $(document).ready(function () {
                 split.splice(split.length - 1, split.length)
             }
 
-            OPTION.val([...outer, ..._.chunk(split, splitLength)[0]].join('\n'));
-            SUB_OPTION.val([...inner, ..._.chunk(split, splitLength)[1]].join('\n'));
-
-            TRIGGER_DOM.trigger('submit');
+            valueWheelPropertySync([...outer, ..._.chunk(split, splitLength)[0]], [...inner, ..._.chunk(split, splitLength)[1]])
         }
 
         SUB_WHEEL.rotate(WHEEL_PROTO.getRotationDegrees(WHEEL_PROTO.dom));
@@ -379,10 +381,8 @@ function getRandomInt(min, max) {
 }
 
 function generateWheel() {
-    const input = OPTION.val() ? OPTION.val().split('\n') : [];
-    const subInput = SUB_OPTION.val() ? SUB_OPTION.val().split('\n') : [];
-    const outerSpd = $('#outer_speed').val();
-    const innerSpd = $('#inner_speed').val();
+    [input, subInput] = getBothWheelValue();
+    [outerSpd, innerSpd] = [$('#outer_speed').val(), $('#inner_speed').val()];
 
     WHEEL_PROTO.registerParameters(OUTER_DOM, outerSpd, input);
     SUB_WHEEL.registerParameters(INNER_DOM, innerSpd, subInput);
@@ -396,4 +396,26 @@ function rgbToHex(r, g, b) {
 
 function toggleControlPanel(bool) {
     $('.config_container').find('input, textarea, button, select').prop('disabled', bool);
+}
+
+function compactString(str) {
+    const max = 10;
+    return str.length > max ? str.substring(0, max) + '...' : str;
+}
+
+function removeDuplicates(array) {
+    return Array.from(new Set(array));
+}
+
+function valueWheelPropertySync(outer, inner) {
+    OPTION.val(outer.join('\n'));
+    SUB_OPTION.val(inner.join('\n'));
+    TRIGGER_DOM.trigger('submit');
+}
+
+function getBothWheelValue() {
+    return [
+        OPTION.val() ? OPTION.val().trim().split('\n') : [],
+        SUB_OPTION.val() ? SUB_OPTION.val().trim().split('\n') : []
+    ];
 }
